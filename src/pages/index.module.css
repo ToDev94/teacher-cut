@@ -1,0 +1,25 @@
+.main {
+  background-color: #f8f0fc;
+  height: 100vh;
+}
+.container {
+  height: 100%;
+  margin: auto;
+}
+
+.form {
+  display: flex;
+  align-items: self-end;
+  gap: 2rem;
+}
+
+.home {
+  padding-top: 7rem;
+  margin: auto;
+  display: flex;
+  gap: 2rem;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  width: 40rem;
+}
