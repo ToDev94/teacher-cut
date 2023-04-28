@@ -41,9 +41,17 @@ export default async function handler(
     sheetFile.Sheets[sheetFile.SheetNames[0]]
   );
   generatePdfDoc(res); */
-  const stat = fs.statSync("./downloads/output.pdf");
-
-  const readFileStream = fs.createReadStream("./downloads/output.pdf");
+  const filePath = path.join(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "..",
+    "downloads",
+    "output.pdf"
+  );
+  console.log(filePath);
+  const readFileStream = fs.createReadStream(filePath);
 
   res.writeHead(200, { "Content-Type": "application/pdf" });
 
