@@ -29,7 +29,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  const { fields, files } = await formidablePromise(req, formidableConfig);
+  await formidablePromise(req, formidableConfig);
   // const dirPath = path.join(__dirname, "uploads");
   /*  const data = await readDirPromise("./uploads");
 
@@ -45,7 +45,7 @@ export default async function handler(
 
   const readFileStream = fs.createReadStream("./downloads/output.pdf");
 
-  res.writeHead("201", { "Content-Type": "application/pdf" });
+  res.writeHead(200, { "Content-Type": "application/pdf" });
 
   readFileStream.pipe(res);
 }
