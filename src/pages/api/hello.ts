@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse, PageConfig } from "next";
-import formidable from "formidable";
+const formidable = require("formidable");
 import fs from "fs";
 const fsp = require("fs").promises;
 import path from "path";
