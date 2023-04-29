@@ -62,6 +62,7 @@ export default function Home() {
 
     const doc = await fetch("/api/hello", options);
 
+    console.log(doc);
     setFileUrl(doc.url);
     setIsLoading(false);
     setIsReady(true);

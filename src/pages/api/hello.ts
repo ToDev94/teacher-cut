@@ -41,21 +41,27 @@ export default async function handler(
     sheetFile.Sheets[sheetFile.SheetNames[0]]
   );
   generatePdfDoc(res); */
-  const filePath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "..",
-    "..",
-    "downloads",
-    "output.pdf"
-  );
-  console.log(filePath);
-  const readFileStream = fs.createReadStream(filePath);
+  // const filePath = path.join(
+  //   __dirname,
+  //   "..",
+  //   "..",
+  //   "..",
+  //   "..",
+  //   "downloads",
+  //   "output.pdf"
+  // );
+
+  // const readFileStream = fs.createReadStream(filePath);
+
+  const pdfDoc = new PDFDocument();
+
+  pdfDoc.text("hello");
 
   res.writeHead(200, { "Content-Type": "application/pdf" });
 
-  readFileStream.pipe(res);
+  pdfDoc.pipe(res);
+
+  pdfDoc.end();
 }
 
 // const saveFile = async (file) => {
