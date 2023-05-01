@@ -42,7 +42,8 @@ export default async function handler(
   }
 
   fs.readFile(dataStoreDir, (err, data) => {
-    const teacherData = JSON.parse(data?.toString());
+    if (err) return err;
+    const teacherData = JSON.parse(data.toString());
     const pdfDoc = new PDFDocument();
 
     pdfDoc.text(teacherData[0].name);
