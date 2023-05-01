@@ -33,7 +33,7 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   if (req.method === "POST") {
-    const { fields, files } = await formidablePromise(req, formidableConfig);
+    const { files } = await formidablePromise(req, formidableConfig);
 
     const dataFilePath = files.file.filepath;
     console.log(dataFilePath);
