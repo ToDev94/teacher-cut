@@ -33,10 +33,8 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   if (req.method === "POST") {
-    const { files } = await formidablePromise(req, formidableConfig);
+    const dataFilePath = await formidablePromise(req, formidableConfig);
 
-    const dataFilePath = files.file.filepath;
-    console.log(dataFilePath);
     const teacherData = await readDirXLSXPromise(dataFilePath);
     await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
 
@@ -72,7 +70,8 @@ function formidablePromise(req, opts) {
       if (err) {
         return reject(err);
       }
-      return resolve({ fields, files });
+
+      return resolve(files.file.filepath);
     });
   });
 }
