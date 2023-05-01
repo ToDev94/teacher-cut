@@ -40,21 +40,20 @@ export default async function handler(
     const teacherStrData = JSON.stringify(teacherData);
     return res.status(201).end();
   }
+  const pdfDoc = new PDFDocument();
   try {
     const biData = await readJSONFilePromise(dataStoreDir);
     const teacherData = JSON.parse(JSON.stringify(biData));
-    const pdfDoc = new PDFDocument();
 
     pdfDoc.text(teacherData[0].name);
 
     res.writeHead(200, { "Content-Type": "application/pdf" });
 
     pdfDoc.pipe(res);
-
-    pdfDoc.end();
   } catch (err) {
     console.log(err);
   }
+  pdfDoc.end();
 }
 
 // const saveFile = async (file) => {
