@@ -6,11 +6,14 @@ const fsp = require("fs").promises;
 import path from "path";
 const PDFDocument = require("pdfkit");
 
-import reader from "xlsx";
+const XLSX = require("xlsx");
+
+const dataDirPath = path.join(__dirname);
+const dataStoreDir = path.join(__dirname, "data.json");
 
 const formidableConfig = {
   keepExtensions: true,
-  uploadDir: "./uploads",
+  uploadDir: dataDirPath,
 
   multiples: false,
 };
@@ -29,39 +32,29 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  await formidablePromise(req, formidableConfig);
-  // const dirPath = path.join(__dirname, "uploads");
-  /*  const data = await readDirPromise("./uploads");
+  if (req.method === "POST") {
+    const { fields, files } = await formidablePromise(req, formidableConfig);
 
-  const dataPath = `./uploads/${data[0]}`;
+    const dataFilePath = files.file.filepath;
+    console.log(dataFilePath);
+    const teacherData = await readDirXLSXPromise(dataFilePath);
+    await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
 
-  const sheetFile = reader.readFile(dataPath);
+    return res.status(201).json({ teacherData });
+  }
 
-  const sheetsData = reader.utils.sheet_to_json(
-    sheetFile.Sheets[sheetFile.SheetNames[0]]
-  );
-  generatePdfDoc(res); */
-  // const filePath = path.join(
-  //   __dirname,
-  //   "..",
-  //   "..",
-  //   "..",
-  //   "..",
-  //   "downloads",
-  //   "output.pdf"
-  // );
+  fs.readFile(dataStoreDir, (err, data) => {
+    const teacherData = JSON.parse(data);
+    const pdfDoc = new PDFDocument();
 
-  // const readFileStream = fs.createReadStream(filePath);
+    pdfDoc.text(teacherData[0].name);
 
-  const pdfDoc = new PDFDocument();
+    res.writeHead(200, { "Content-Type": "application/pdf" });
 
-  pdfDoc.text("hello");
+    pdfDoc.pipe(res);
 
-  res.writeHead(200, { "Content-Type": "application/pdf" });
-
-  pdfDoc.pipe(res);
-
-  pdfDoc.end();
+    pdfDoc.end();
+  });
 }
 
 // const saveFile = async (file) => {
@@ -84,12 +77,28 @@ function formidablePromise(req, opts) {
   });
 }
 
-function readDirPromise(dir) {
+function readDirXLSXPromise(dir) {
   return new Promise((resolve, reject) => {
-    fs.readdir(dir, (err, files) => {
+    fs.readFile(dir, (err, data) => {
       if (err) return reject(err);
 
-      return resolve(files);
+      const spreadsheet = XLSX.read(data);
+
+      const teacherdata = XLSX.utils.sheet_to_json(
+        spreadsheet.Sheets[spreadsheet.SheetNames[0]]
+      );
+      fs.unlinkSync(dir);
+      return resolve(teacherdata);
+    });
+  });
+}
+
+function CreateFilePromise(dir, content) {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(dir, content, (err) => {
+      if (err) return reject(err);
+
+      return resolve("Done!");
     });
   });
 }
