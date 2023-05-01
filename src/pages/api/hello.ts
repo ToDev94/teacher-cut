@@ -41,19 +41,18 @@ export default async function handler(
     return res.status(201).end();
   }
 
-  fs.readFile(dataStoreDir, (err, data) => {
-    if (err) return err;
-    const teacherData = JSON.parse(data.toString());
-    const pdfDoc = new PDFDocument();
+  const biData = await readJSONFilePromise(dataStoreDir);
 
-    pdfDoc.text(teacherData[0].name);
+  const teacherData = JSON.parse(JSON.stringify(biData));
+  const pdfDoc = new PDFDocument();
 
-    res.writeHead(200, { "Content-Type": "application/pdf" });
+  pdfDoc.text(teacherData[0].name);
 
-    pdfDoc.pipe(res);
+  res.writeHead(200, { "Content-Type": "application/pdf" });
 
-    pdfDoc.end();
-  });
+  pdfDoc.pipe(res);
+
+  pdfDoc.end();
 }
 
 // const saveFile = async (file) => {
@@ -73,6 +72,16 @@ function formidablePromise(req, opts) {
       }
 
       return resolve(files.file.filepath);
+    });
+  });
+}
+
+function readJSONFilePromise(dir) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(dir, (err, data) => {
+      if (err) return reject(err);
+
+      return resolve(data.toString());
     });
   });
 }
