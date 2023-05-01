@@ -37,8 +37,8 @@ export default async function handler(
 
     const teacherData = await readDirXLSXPromise(dataFilePath);
     await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
-
-    return res.status(201).json({ teacherData });
+    const teacherStrData = JSON.stringify(teacherData);
+    return res.status(201).end();
   }
 
   fs.readFile(dataStoreDir, (err, data) => {
