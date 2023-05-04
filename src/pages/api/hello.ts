@@ -5,6 +5,7 @@ import fs from "fs";
 const fsp = require("fs").promises;
 import path from "path";
 const PDFDocument = require("pdfkit");
+const storage = require("node-persist");
 
 const XLSX = require("xlsx");
 
@@ -36,23 +37,27 @@ export default async function handler(
     const dataFilePath = await formidablePromise(req, formidableConfig);
 
     const teacherData = await readDirXLSXPromise(dataFilePath);
-    await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
-    const teacherStrData = JSON.stringify(teacherData);
+
+    await storage.init();
+    await storage.setItem("data", teacherData);
+
+    // await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
+
     return res.status(201).end();
   }
   const pdfDoc = new PDFDocument();
-  try {
-    const biData = await readJSONFilePromise(dataStoreDir);
-    const teacherData = JSON.parse(JSON.stringify(biData));
 
-    pdfDoc.text(teacherData[0].name);
+  // const biData = await readJSONFilePromise(dataStoreDir);
+  // const teacherData = JSON.parse(JSON.stringify(biData));
 
-    res.writeHead(200, { "Content-Type": "application/pdf" });
+  const data = await storage.getItem("data");
 
-    pdfDoc.pipe(res);
-  } catch (err) {
-    console.log(err);
-  }
+  pdfDoc.text(data[0].name);
+
+  res.writeHead(200, { "Content-Type": "application/pdf" });
+
+  pdfDoc.pipe(res);
+
   pdfDoc.end();
 }
 
