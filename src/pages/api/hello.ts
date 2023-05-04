@@ -5,12 +5,16 @@ import fs from "fs";
 const fsp = require("fs").promises;
 import path from "path";
 const PDFDocument = require("pdfkit");
-const storage = require("node-persist");
+const { MongoClient } = require("mongodb");
 
 const XLSX = require("xlsx");
 
 const dataDirPath = path.join(__dirname);
 const dataStoreDir = path.join(__dirname, "data.json");
+
+const databaseURL =
+  "mongodb+srv://nefoucitoufik:159512369Nn@cluster0.nrasnxt.mongodb.net/?retryWrites=true&w=majority";
+const client = new MongoClient(databaseURL);
 
 const formidableConfig = {
   keepExtensions: true,
@@ -37,11 +41,11 @@ export default async function handler(
     const dataFilePath = await formidablePromise(req, formidableConfig);
 
     const teacherData = await readDirXLSXPromise(dataFilePath);
-
-    await storage.init();
-    await storage.setItem("data", teacherData);
-
+    await client.connect();
     // await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
+    await client.db().collection("docs").insertMany(teacherData);
+
+    await client.close();
 
     return res.status(201).end();
   }
@@ -49,8 +53,10 @@ export default async function handler(
 
   // const biData = await readJSONFilePromise(dataStoreDir);
   // const teacherData = JSON.parse(JSON.stringify(biData));
+  await client.connect();
 
-  const data = await storage.getItem("data");
+  const dataCursor = await client.db().collection("docs").find();
+  const data = await dataCursor.toArray();
 
   pdfDoc.text(data[0].name);
 
