@@ -43,6 +43,7 @@ export default async function handler(
     const teacherData = await readDirXLSXPromise(dataFilePath);
     await client.connect();
     // await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
+    await client.db().collection("docs").deleteMany({});
     await client.db().collection("docs").insertMany(teacherData);
 
     await client.close();
