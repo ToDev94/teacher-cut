@@ -50,7 +50,7 @@ export default async function handler(
 
     return res.status(201).end();
   }
-  const pdfDoc = new PDFDocument();
+  const pdfDoc = new PDFDocument({ size: "A4", margin: 50, rlt: true });
 
   // const biData = await readJSONFilePromise(dataStoreDir);
   // const teacherData = JSON.parse(JSON.stringify(biData));
@@ -59,7 +59,13 @@ export default async function handler(
   const dataCursor = await client.db().collection("docs").find();
   const data = await dataCursor.toArray();
 
-  pdfDoc.text(data[0].name);
+  const text = "الجمهورية الجزائرية الديمقراطية الشعبية وزارة التربية الوطنية";
+
+  pdfDoc.font("public/ARIAL.TTF").fontSize(16).text(text, {
+    underline: true,
+
+    align: "center",
+  });
 
   res.writeHead(200, { "Content-Type": "application/pdf" });
 
