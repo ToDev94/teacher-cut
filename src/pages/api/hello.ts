@@ -59,13 +59,18 @@ export default async function handler(
   const dataCursor = await client.db().collection("docs").find();
   const data = await dataCursor.toArray();
 
-  const text = "الجمهورية الجزائرية الديمقراطية الشعبية وزارة التربية الوطنية";
+  const text = "الجمهورية  الجزائرية الديمقراطية الشعبية وزارة التربية الوطنية";
 
-  pdfDoc.font("public/ARIAL.TTF").fontSize(16).text(text, {
-    underline: true,
+  const fontPath = path.join(process.cwd(), "public", "ARIAL.TTF");
+  pdfDoc
+    .font(fontPath)
+    .fontSize(16)
+    .text(text, {
+      underline: true,
 
-    align: "center",
-  });
+      align: "center",
+      features: ["rtla"],
+    });
 
   res.writeHead(200, { "Content-Type": "application/pdf" });
 
@@ -147,4 +152,8 @@ function generatePdfDoc(res) {
   doc.fontSize(25).text("Some text with an embedded font!", 100, 100);
 
   return doc.pipe(fs.createWriteStream("./downloads/output.pdf"));
+}
+
+function reverseText(text) {
+  return text.split(" ").reverse().join(" ");
 }
