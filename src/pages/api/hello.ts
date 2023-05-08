@@ -38,15 +38,20 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   if (req.method === "POST") {
-    const dataFilePath = await formidablePromise(req, formidableConfig);
+    try {
+      const dataFilePath = await formidablePromise(req, formidableConfig);
 
-    const teacherData = await readDirXLSXPromise(dataFilePath);
-    await client.connect();
-    // await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
-    await client.db().collection("docs").deleteMany({});
-    await client.db().collection("docs").insertMany(teacherData);
+      const teacherData = await readDirXLSXPromise(dataFilePath);
 
-    await client.close();
+      await client.connect();
+      // await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
+      await client.db().collection("docs").deleteMany({});
+      await client.db().collection("docs").insertMany(teacherData);
+
+      await client.close();
+    } catch (err) {
+      console.log(err);
+    }
 
     return res.status(201).end();
   }
