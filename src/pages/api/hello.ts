@@ -10,7 +10,7 @@ const { MongoClient } = require("mongodb");
 const XLSX = require("xlsx");
 
 const dataDirPath = path.join(__dirname);
-const dataStoreDir = path.join(__dirname, "data.json");
+const dataStoreDir = path.join(process.cwd(), "data.json");
 
 const databaseURL =
   "mongodb+srv://nefoucitoufik:159512369Nn@cluster0.nrasnxt.mongodb.net/?retryWrites=true&w=majority";
@@ -43,17 +43,18 @@ export default async function handler(
 
       const teacherData = await readDirXLSXPromise(dataFilePath);
 
-      await client.connect();
+      await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
+
+      /*  await client.connect();
       // await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
       await client.db().collection("docs").deleteMany({});
       await client.db().collection("docs").insertMany(teacherData);
 
-      await client.close();
+      await client.close(); */
+      return res.status(201).end();
     } catch (err) {
       console.log(err);
     }
-
-    return res.status(201).end();
   }
 
   const pdfDoc = new PDFDocument({
@@ -68,11 +69,13 @@ export default async function handler(
     autoFirstPage: false,
   });
 
-  await client.connect();
+  const data = await readJSONFilePromise(dataStoreDir);
+
+  /*  await client.connect();
 
   const dataCursor = await client.db().collection("docs").find();
   const data = await dataCursor.toArray();
-
+ */
   const Doc = generatePdfDoc(data, pdfDoc);
 
   res.writeHead(200, { "Content-Type": "application/pdf" });
@@ -80,6 +83,8 @@ export default async function handler(
   Doc.pipe(res);
 
   Doc.end();
+
+  return;
 }
 
 function formidablePromise(req, opts) {
@@ -101,7 +106,7 @@ function readJSONFilePromise(dir) {
     fs.readFile(dir, (err, data) => {
       if (err) return reject(err);
 
-      return resolve(data.toString());
+      return resolve(JSON.parse(data.toString()));
     });
   });
 }
