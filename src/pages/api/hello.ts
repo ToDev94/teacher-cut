@@ -48,6 +48,8 @@ export default async function handler(
   redis.on("connect", () => {
     console.log("connected to redis successfully!");
   });
+
+  redis.del("teachersdata");
   if (req.method === "POST") {
     try {
       const chunks = [];
@@ -172,7 +174,7 @@ function generatePdfDoc(items, pdfDoc) {
     const text4 = "رمز المؤسسة:...............";
     const text5 = "رمز الموظف:" + item["الرمز"];
     const text6 = "إشعار بالخصم من الراتب";
-    const text7 = `يخصم من راتب السيد)ة(: ${item["الإسم"]} نفوسي`;
+    const text7 = `يخصم من راتب السيد)ة(: ${item["الإسم"]} ${item["اللقب "]}`;
     const text8 = `الرتبة: ${item["الصفة"]}       الصفة: ${item["الرتبة"]} `;
     const text9 = "المــــدة";
     const text15 = ` ${item["المدة"]} أيام`;
