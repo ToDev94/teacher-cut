@@ -2,15 +2,18 @@
 import type { NextApiRequest, NextApiResponse, PageConfig } from "next";
 const formidable = require("formidable");
 import fs from "fs";
-const fsp = require("fs").promises;
+import { Writable } from "stream";
+
 import path from "path";
 const PDFDocument = require("pdfkit");
 const { MongoClient } = require("mongodb");
 
+const Redis = require("ioredis");
+
 const XLSX = require("xlsx");
 
 const dataDirPath = path.join(__dirname);
-const dataStoreDir = path.join(process.cwd(), "data.json");
+// const dataStoreDir = path.join(process.cwd(), "data.json");
 
 const databaseURL =
   "mongodb+srv://nefoucitoufik:159512369Nn@cluster0.nrasnxt.mongodb.net/?retryWrites=true&w=majority";
@@ -33,24 +36,38 @@ type Data = {
   name: string;
 };
 
+const redis = new Redis({
+  host: "redis-15626.c16.us-east-1-2.ec2.cloud.redislabs.com",
+  port: 15626,
+  username: "default",
+  password: "5ZnC5EzFLOb6EnxS0m5l2DQY0uLD78vE",
+});
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
+  redis.on("connect", () => {
+    console.log("connected to redis successfully!");
+  });
   if (req.method === "POST") {
     try {
-      const dataFilePath = await formidablePromise(req, formidableConfig);
+      const chunks = [];
+      const { fields, files } = await formidablePromise(req, {
+        ...formidableConfig,
+        fileWriteStreamHandler: () => fileConsumer(chunks),
+      });
 
-      const teacherData = await readDirXLSXPromise(dataFilePath);
+      const workBook = XLSX.read(Buffer.concat(chunks), { type: "buffer" });
+      const data = XLSX.utils.sheet_to_json(
+        workBook.Sheets[workBook.SheetNames[0]]
+      );
 
-      await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
+      const response = await redis.set("teachersData", JSON.stringify(data));
 
-      /*  await client.connect();
+      // const teacherData = await readDirXLSXPromise(dataFilePath);
+
       // await CreateFilePromise(dataStoreDir, JSON.stringify(teacherData));
-      await client.db().collection("docs").deleteMany({});
-      await client.db().collection("docs").insertMany(teacherData);
 
-      await client.close(); */
       return res.status(201).end();
     } catch (err) {
       console.log(err);
@@ -69,19 +86,18 @@ export default async function handler(
     autoFirstPage: false,
   });
 
-  const data = await readJSONFilePromise(dataStoreDir);
+  // const data = await readJSONFilePromise(dataStoreDir);
 
-  /*  await client.connect();
+  const data = await redis.get("teachersData");
+  const dataObj = JSON.parse(data);
 
-  const dataCursor = await client.db().collection("docs").find();
-  const data = await dataCursor.toArray();
- */
-  const Doc = generatePdfDoc(data, pdfDoc);
+  const Doc = generatePdfDoc(dataObj, pdfDoc);
 
   res.writeHead(200, { "Content-Type": "application/pdf" });
 
   Doc.pipe(res);
 
+  await redis.disconnect();
   Doc.end();
 
   return;
@@ -96,7 +112,7 @@ function formidablePromise(req, opts) {
         return reject(err);
       }
 
-      return resolve(files.file.filepath);
+      return resolve({ fields, files });
     });
   });
 }
@@ -136,6 +152,17 @@ function CreateFilePromise(dir, content) {
     });
   });
 }
+
+const fileConsumer = (acc) => {
+  const writable = new Writable({
+    write: (chunk, _enc, next) => {
+      acc.push(chunk);
+      next();
+    },
+  });
+
+  return writable;
+};
 
 function generatePdfDoc(items, pdfDoc) {
   items.forEach((item) => {
