@@ -53,7 +53,8 @@ export default function Home() {
 
     setIsLoading(true);
     const formData = new FormData();
-    formData.append("file", value[0]);
+    console.log(value[0]);
+    formData.append("file", value[0], value[0].name);
 
     const options = {
       method: "POST",
@@ -62,7 +63,6 @@ export default function Home() {
 
     const doc = await fetch("/api/hello", options);
 
-    console.log(doc);
     setFileUrl(doc.url);
     setIsLoading(false);
     setIsReady(true);

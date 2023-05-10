@@ -6,7 +6,6 @@ import { Writable } from "stream";
 
 import path from "path";
 const PDFDocument = require("pdfkit");
-const { MongoClient } = require("mongodb");
 
 const Redis = require("ioredis");
 
