@@ -15,10 +15,6 @@ const XLSX = require("xlsx");
 const dataDirPath = path.join(__dirname);
 // const dataStoreDir = path.join(process.cwd(), "data.json");
 
-const databaseURL =
-  "mongodb+srv://nefoucitoufik:159512369Nn@cluster0.nrasnxt.mongodb.net/?retryWrites=true&w=majority";
-const client = new MongoClient(databaseURL);
-
 const formidableConfig = {
   keepExtensions: true,
   uploadDir: dataDirPath,
@@ -52,7 +48,7 @@ export default async function handler(
   if (req.method === "POST") {
     try {
       const chunks = [];
-      const { fields, files } = await formidablePromise(req, {
+      await formidablePromise(req, {
         ...formidableConfig,
         fileWriteStreamHandler: () => fileConsumer(chunks),
       });
@@ -62,7 +58,7 @@ export default async function handler(
         workBook.Sheets[workBook.SheetNames[0]]
       );
 
-      const response = await redis.set("teachersData", JSON.stringify(data));
+      await redis.set("teachersData", JSON.stringify(data));
 
       // const teacherData = await readDirXLSXPromise(dataFilePath);
 
