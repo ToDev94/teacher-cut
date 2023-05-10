@@ -37,6 +37,9 @@ const redis = new Redis({
   port: 15626,
   username: "default",
   password: "5ZnC5EzFLOb6EnxS0m5l2DQY0uLD78vE",
+  retryStrategy() {
+    redis.quit();
+  },
 });
 export default async function handler(
   req: NextApiRequest,
@@ -93,7 +96,6 @@ export default async function handler(
 
   Doc.pipe(res);
 
-  await redis.disconnect();
   Doc.end();
 
   return;
