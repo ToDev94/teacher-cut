@@ -5,14 +5,20 @@ import fs from "fs";
 import { Writable } from "stream";
 
 import path from "path";
-const PDFDocument = require("pdfkit");
+const PDFDocument1 = require("pdfkit");
 
 const Redis = require("ioredis");
 
 const XLSX = require("xlsx");
+const util = require("util");
+const { PDFDocument } = require("pdf-lib");
+import { Buffer } from "node:buffer";
+const { Readable } = require("node:stream");
+const toBuffer = require("typedarray-to-buffer");
+import fontkit from "@pdf-lib/fontkit";
 
 const dataDirPath = path.join(__dirname);
-// const dataStoreDir = path.join(process.cwd(), "data.json");
+const fontDir = path.join(process.cwd(), "public", "ARIAL.TTF");
 
 const formidableConfig = {
   keepExtensions: true,
@@ -74,7 +80,7 @@ export default async function handler(
     }
   }
 
-  const pdfDoc = new PDFDocument({
+  /*   const pdfDoc = new PDFDocument1({
     size: "A4",
     margins: {
       top: 50,
@@ -85,19 +91,21 @@ export default async function handler(
     rlt: true,
     autoFirstPage: false,
   });
-
+ */
   // const data = await readJSONFilePromise(dataStoreDir);
 
   const data = await redis.get("teachersData");
   const dataObj = JSON.parse(data);
 
-  const Doc = generatePdfDoc(dataObj, pdfDoc);
+  // const Doc = generatePdfDoc(dataObj, pdfDoc);
+
+  const Doc = await modifyPdfDoc(dataObj);
+
+  const stream = Readable.from(toBuffer(Doc));
 
   res.writeHead(200, { "Content-Type": "application/pdf" });
 
-  Doc.pipe(res);
-
-  Doc.end();
+  stream.pipe(res);
 
   return;
 }
@@ -162,6 +170,57 @@ const fileConsumer = (acc) => {
 
   return writable;
 };
+
+async function modifyPdfDoc(items) {
+  const lCode = "رمز المؤسسة";
+
+  const readFile = util.promisify(fs.readFile);
+
+  const newPdfDoc = await PDFDocument.create();
+
+  const pdfBytes = await readFile(path.join(process.cwd(), "temp.pdf"));
+  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const fontBytes = await readFile(fontDir);
+
+  let i = 0;
+
+  for (const item of items) {
+    const [firstDonorPage] = await newPdfDoc.copyPages(pdfDoc, [0]);
+    newPdfDoc.addPage(firstDonorPage);
+    newPdfDoc.registerFontkit(fontkit);
+    const customFont = await newPdfDoc.embedFont(fontBytes);
+    const pages = newPdfDoc.getPages();
+    const firstPage = pages[i];
+    const { width, height } = firstPage.getSize();
+    //////////////
+
+    firstPage.drawText(lCode, {
+      x: 90,
+      y: height / 2 + 303,
+      size: 14,
+      font: customFont,
+    });
+    firstPage.drawText("رمز الموطف", {
+      x: 90,
+      y: height / 2 + 283,
+      size: 14,
+      font: customFont,
+    });
+
+    firstPage.drawText(`${item["اللقب "]} ${item["الإسم"]}`, {
+      x: 240,
+      y: height / 2 + 116,
+      size: 14,
+      font: customFont,
+    });
+
+    i += 1;
+  }
+
+  const pdfBytesRes = await newPdfDoc.save();
+
+  return pdfBytesRes;
+}
 
 function generatePdfDoc(items, pdfDoc) {
   items.forEach((item) => {
