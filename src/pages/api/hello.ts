@@ -100,6 +100,7 @@ export default async function handler(
   // const Doc = generatePdfDoc(dataObj, pdfDoc);
 
   const Doc = await modifyPdfDoc(dataObj);
+  // const Doc = await fillPdfForm(dataObj);
 
   const stream = Readable.from(toBuffer(Doc));
 
@@ -171,6 +172,22 @@ const fileConsumer = (acc) => {
   return writable;
 };
 
+async function fillPdfForm(items) {
+  const readFile = util.promisify(fs.readFile);
+
+  const formPdfBytes = await readFile(path.join(process.cwd(), "temppdf.pdf"));
+  const pdfDoc = await PDFDocument.load(formPdfBytes);
+  pdfDoc.registerFontkit(fontkit);
+  const fontBytes = await readFile(fontDir);
+  const customFont = await pdfDoc.embedFont(fontBytes);
+  const form = pdfDoc.getForm();
+  const nameField = form.getTextField("fullname");
+
+  nameField.setText("توفيق نفوسي", { font: customFont });
+  const pdfBytes = await pdfDoc.save();
+  return pdfBytes;
+}
+
 async function modifyPdfDoc(items) {
   const lCode = "رمز المؤسسة";
 
@@ -181,14 +198,14 @@ async function modifyPdfDoc(items) {
   const pdfBytes = await readFile(path.join(process.cwd(), "temp.pdf"));
   const pdfDoc = await PDFDocument.load(pdfBytes);
   const fontBytes = await readFile(fontDir);
+  newPdfDoc.registerFontkit(fontkit);
+  const customFont = await newPdfDoc.embedFont(fontBytes, { subset: true });
 
   let i = 0;
 
   for (const item of items) {
     const [firstDonorPage] = await newPdfDoc.copyPages(pdfDoc, [0]);
     newPdfDoc.addPage(firstDonorPage);
-    newPdfDoc.registerFontkit(fontkit);
-    const customFont = await newPdfDoc.embedFont(fontBytes);
     const pages = newPdfDoc.getPages();
     const firstPage = pages[i];
     const { width, height } = firstPage.getSize();
